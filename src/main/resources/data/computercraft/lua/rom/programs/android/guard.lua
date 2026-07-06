@@ -13,7 +13,7 @@ local function guard()
     while true do
         -- If the android is attacking
         -- then skip for now.
-        if android.currentTask() == "attackingMob" then
+        if android.currentTask() == "attacking" then
             goto pass
         end
 
@@ -70,11 +70,15 @@ local function checkFuel()
     -- Check the fuel level, if it is less than 1 then we know
     -- the android has no fuel left in reserve.
     if android.fuelLevel() < 1 then
-        -- Try to refuel.
-        local failed = android.refuel()
+        -- Try to refuel. Android APIs use ok, err semantics:
+        -- ok is true on success, false with an error message on failure.
+        local ok, err = android.refuel()
 
-        -- If failed is true then the android failed to refuel.
-        return not failed
+        if not ok and err ~= nil then
+            print(err)
+        end
+
+        return ok
     end
 
     return true

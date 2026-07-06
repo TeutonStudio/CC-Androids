@@ -5,6 +5,7 @@
   "entity.cc_androids.rogue_android": "Rogue Android",
   "entity.cc_androids.unfinished_android": "Android Scaffolding",
   "entity.cc_androids.android.locked": "Android is locked",
+  "entity.cc_androids.android.unlocked": "Android is unlocked",
 
   "item.cc_androids.components": "Components",
   "item.cc_androids.android_cpu": "Android CPU",
