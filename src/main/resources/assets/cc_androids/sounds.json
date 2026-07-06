@@ -9,7 +9,7 @@
     ]
   },
   "android_hurt": {
-    "subtitles": "sound.cc_androids.android_ambient",
+    "subtitle": "sound.cc_androids.android_hurt",
     "sounds": [
       "cc_androids:android_hurt_1",
       "cc_androids:android_hurt_2",
@@ -17,7 +17,7 @@
     ]
   },
   "android_death": {
-    "subtitles": "sound.cc-android.android_died",
+    "subtitle": "sound.cc_androids.android_death",
     "sounds": [
       "cc_androids:android_death"
     ]

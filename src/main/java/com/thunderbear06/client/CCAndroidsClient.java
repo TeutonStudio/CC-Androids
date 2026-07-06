@@ -1,10 +1,12 @@
 package com.thunderbear06.client;
 
 import com.thunderbear06.CCAndroids;
+import com.thunderbear06.screen.AndroidScreen;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 @EventBusSubscriber(modid = CCAndroids.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class CCAndroidsClient {
@@ -16,7 +18,12 @@ public final class CCAndroidsClient {
         event.registerEntityRenderer(CCAndroids.ANDROID.get(), AndroidRenderer::new);
         event.registerEntityRenderer(CCAndroids.ADVANCED_ANDROID.get(), AndroidRenderer::new);
         event.registerEntityRenderer(CCAndroids.COMMAND_ANDROID.get(), AndroidRenderer::new);
-        event.registerEntityRenderer(CCAndroids.UNFINISHED_ANDROID.get(), AndroidRenderer::new);
-        event.registerEntityRenderer(CCAndroids.ROGUE_ANDROID.get(), AndroidRenderer::new);
+        event.registerEntityRenderer(CCAndroids.UNFINISHED_ANDROID.get(), AndroidFrameRenderer::new);
+        event.registerEntityRenderer(CCAndroids.ROGUE_ANDROID.get(), RogueAndroidRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(CCAndroids.ANDROID_MENU.get(), AndroidScreen::new);
     }
 }
