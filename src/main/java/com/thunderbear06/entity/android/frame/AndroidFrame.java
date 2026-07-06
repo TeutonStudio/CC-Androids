@@ -3,6 +3,7 @@ package com.thunderbear06.entity.android.frame;
 import com.thunderbear06.CCAndroids;
 import com.thunderbear06.entity.android.BaseAndroidEntity;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -17,6 +18,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 
 public class AndroidFrame extends Mob {
@@ -61,7 +63,7 @@ public class AndroidFrame extends Mob {
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
         if ((stack.is(CCAndroids.ANDROID_CPU.get()) || stack.is(Items.COMMAND_BLOCK)) && readyForCpu()) {
-            finish(stack.is(Items.COMMAND_BLOCK) ? ComputerFamily.COMMAND : advanced ? ComputerFamily.ADVANCED : ComputerFamily.NORMAL);
+            finish(stack.is(Items.COMMAND_BLOCK) ? ComputerFamily.COMMAND : advanced ? ComputerFamily.ADVANCED : ComputerFamily.NORMAL, readComputerId(stack));
             consume(stack, player);
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
@@ -77,7 +79,13 @@ public class AndroidFrame extends Mob {
         return getComponentsNeeded() == 0 && getIngotsNeeded() == 0 && hasCore();
     }
 
-    private void finish(ComputerFamily family) {
+    private int readComputerId(ItemStack stack) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null || !data.contains("ComputerID")) return -1;
+        return data.copyTag().getInt("ComputerID");
+    }
+
+    private void finish(ComputerFamily family, int computerID) {
         if (level().isClientSide) return;
         BaseAndroidEntity android = switch (family) {
             case ADVANCED -> CCAndroids.ADVANCED_ANDROID.get().create(level());
@@ -87,6 +95,7 @@ public class AndroidFrame extends Mob {
         if (android == null) return;
         android.moveTo(getX(), getY(), getZ(), getYRot(), getXRot());
         android.getComputer().setFamily(family);
+        if (computerID >= 0) android.getComputer().setComputerID(computerID);
         discard();
         level().addFreshEntity(android);
         android.playSound(SoundEvents.BEACON_ACTIVATE, 1.0F, 1.0F);

@@ -56,7 +56,13 @@ public class AndroidAPI implements ILuaAPI {
 
     private LivingEntity entity(String uuid) throws LuaException {
         if (!(brain.getAndroid().level() instanceof ServerLevel serverLevel)) throw new LuaException("Server level unavailable");
-        var entity = serverLevel.getEntity(UUID.fromString(uuid));
+        UUID parsed;
+        try {
+            parsed = UUID.fromString(uuid);
+        } catch (IllegalArgumentException e) {
+            throw new LuaException("Invalid UUID: " + uuid);
+        }
+        var entity = serverLevel.getEntity(parsed);
         return entity instanceof LivingEntity living ? living : null;
     }
 
@@ -82,7 +88,11 @@ public class AndroidAPI implements ILuaAPI {
     @LuaFunction
     public final MethodResult goTo(String uuid) throws LuaException {
         if (missingFuel()) return MethodResult.of(false, "Android requires fuel.");
-        return brain.getModules().navigationModule.moveToEntity(uuid);
+        try {
+            return brain.getModules().navigationModule.moveToEntity(uuid);
+        } catch (IllegalArgumentException e) {
+            return MethodResult.of(false, "Invalid UUID: " + uuid);
+        }
     }
 
     @LuaFunction
@@ -156,7 +166,14 @@ public class AndroidAPI implements ILuaAPI {
 
     @LuaFunction(mainThread = true)
     public final MethodResult getHandInfo(String handName) {
-        ItemStack stack = handName.equals("left") || handName.equals("off") ? brain.getAndroid().getOffhandItem() : brain.getAndroid().getMainHandItem();
+        ItemStack stack;
+        if (handName.equals("right") || handName.equals("main")) {
+            stack = brain.getAndroid().getMainHandItem();
+        } else if (handName.equals("left") || handName.equals("off")) {
+            stack = brain.getAndroid().getOffhandItem();
+        } else {
+            return MethodResult.of(false, "Invalid hand name. Expected main/right or off/left.");
+        }
         return MethodResult.of(stack.getHoverName().getString(), stack.getCount());
     }
 
@@ -209,6 +226,7 @@ public class AndroidAPI implements ILuaAPI {
     @LuaFunction(mainThread = true)
     public final MethodResult storeHeldItemInContainer(IArguments args) throws LuaException {
         BlockPos pos = getPosFromArgs(args);
+        if (args.count() != 2 && args.count() != 4) return MethodResult.of(false, "Expected position table and slot, or x, y, z, slot.");
         int slot = args.count() == 2 ? args.getInt(1) : args.getInt(3);
         brain.getModules().interactionModule.storeHeldItemInContainer(pos, slot);
         return MethodResult.of(true);
@@ -217,6 +235,7 @@ public class AndroidAPI implements ILuaAPI {
     @LuaFunction(mainThread = true)
     public final MethodResult grabItemFromContainer(IArguments args) throws LuaException {
         BlockPos pos = getPosFromArgs(args);
+        if (args.count() != 2 && args.count() != 4) return MethodResult.of(false, "Expected position table and slot, or x, y, z, slot.");
         int slot = args.count() == 2 ? args.getInt(1) : args.getInt(3);
         brain.getModules().interactionModule.grabItemFromContainer(pos, slot);
         return MethodResult.of(true);

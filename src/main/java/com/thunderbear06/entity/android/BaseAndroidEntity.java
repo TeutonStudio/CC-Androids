@@ -10,6 +10,7 @@ import dan200.computercraft.api.lua.MethodResult;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
@@ -155,9 +156,13 @@ public abstract class BaseAndroidEntity extends PathfinderMob {
     }
 
     public void sendChatMessage(String message) {
-        if (level().getServer() != null) {
-            CCAndroids.LOGGER.info("[Android {}] {}", getStringUUID(), message);
-        }
+        if (level().getServer() == null) return;
+        Component line = Component.literal("[Android " + getDisplayName().getString() + "] " + message);
+        level().getServer().getPlayerList().getPlayers().stream()
+                .filter(player -> player.level() == level())
+                .filter(player -> player.distanceToSqr(this) <= 64.0D * 64.0D)
+                .forEach(player -> player.sendSystemMessage(line));
+        CCAndroids.LOGGER.info("[Android {}] {}", getStringUUID(), message);
     }
 
     protected void dropAndroidContents(boolean fullConstructionRefund) {

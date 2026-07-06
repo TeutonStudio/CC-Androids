@@ -1,5 +1,5 @@
 {
-  "type": "cc_androids:rogue_android",
+  "type": "minecraft:entity",
   "pools": [
     {
       "rolls": 3,
