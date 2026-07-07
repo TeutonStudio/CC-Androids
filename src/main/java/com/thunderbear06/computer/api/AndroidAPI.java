@@ -5,6 +5,7 @@ import com.thunderbear06.ai.task.tasks.AttackEntityTask;
 import com.thunderbear06.ai.task.tasks.BreakBlockTask;
 import com.thunderbear06.ai.task.tasks.InteractBlockTask;
 import com.thunderbear06.ai.task.tasks.InteractEntityTask;
+import com.thunderbear06.entity.android.CommandAndroidEntity;
 import dan200.computercraft.api.lua.IArguments;
 import dan200.computercraft.api.lua.ILuaAPI;
 import dan200.computercraft.api.lua.LuaException;
@@ -245,6 +246,18 @@ public class AndroidAPI implements ILuaAPI {
     public final MethodResult sendChatMessage(String text) {
         brain.getAndroid().sendChatMessage(text);
         return MethodResult.of(true);
+    }
+
+    @LuaFunction(mainThread = true)
+    public final MethodResult runCommand(String command) {
+        if (!(brain.getAndroid() instanceof CommandAndroidEntity)) return MethodResult.of(false, "Command execution requires a Command Android.");
+        if (!(brain.getAndroid().level() instanceof ServerLevel serverLevel)) return MethodResult.of(false, "Server level unavailable.");
+        try {
+            serverLevel.getServer().getCommands().performPrefixedCommand(brain.getAndroid().createCommandSourceStack().withPermission(4), command);
+            return MethodResult.of(true);
+        } catch (RuntimeException e) {
+            return MethodResult.of(false, e.getMessage() == null ? "Command failed." : e.getMessage());
+        }
     }
 
     @LuaFunction

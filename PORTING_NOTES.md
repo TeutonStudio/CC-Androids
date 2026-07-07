@@ -15,6 +15,8 @@
 ## Tested in this work pass
 
 - `./gradlew clean build` completed successfully.
+- `./gradlew build` completed successfully after the P0 mining/container/wrench fixes in the current pass.
+- Final `./gradlew build` completed successfully, and `timeout 60 ./gradlew runServer` reached `Done (...)!` with the new spawn/event registrations loaded before the timeout stopped it.
 - `./gradlew runClient` started Minecraft 1.21.1 with NeoForge, CC:Tweaked and CC: Androids. The automated run was stopped by timeout after startup/world load, not by a mod crash.
 - `timeout 60 ./gradlew runServer` started a dedicated NeoForge server with CC:Tweaked and CC: Androids, reached `Done (...)!`, then stopped through the timeout.
 - The client log showed an integrated world loading and `RecipeManager` loading recipes without `cc_androids` datapack errors.
@@ -51,6 +53,7 @@ Implemented and expected to be usable:
 - `android.storeHeldItemInContainer(x, y, z, slot)`
 - `android.grabItemFromContainer(x, y, z, slot)`
 - `android.sendChatMessage(text)`
+- `android.runCommand(command)` on Command Androids only
 - `android.changeFace(faceName)`
 - `android.cancelTask()`
 
@@ -62,10 +65,10 @@ The bundled ROM programs have been adjusted to the `ok, err` convention for `and
 
 - Pocket upgrades and real peripheral bridging are not implemented. `DummyPocket` is only a safe placeholder.
 - Modem/rednet support through hand items or pocket upgrades is not implemented.
-- Mining is functional but still simplified. It runs server-side, ignores air and unbreakable blocks, and clears break progress, but does not yet fully mirror player permission/event/tool behavior.
-- Container interaction uses direct `Container` access with range and slot checks. It is not yet permission-perfect for every modded container.
-- Fake-player interaction is the preferred path for block and entity use. If a future CC:Tweaked or NeoForge version changes `PlatformHelper.createFakePlayer`, this path must be retested.
-- The old custom `wrench_shaped` recipe is not active. Current recipes use vanilla shaped crafting, so the wrench may be consumed in the components recipe as a temporary deviation.
+- Mining runs through the CC:Tweaked/NeoForge fake player and `ServerPlayerGameMode#destroyBlock`, so it now follows the normal player break path for events, permissions, tools, enchantments and drops. Manual protection-mod smoke testing is still recommended.
+- Container interaction now uses NeoForge `IItemHandler` block capabilities with side context and range checks. Manual smoke testing against both vanilla chests and capability-only modded inventories is still recommended.
+- Fake-player interaction is the preferred path for block use, entity use and block breaking. If a future CC:Tweaked or NeoForge version changes `PlatformHelper.createFakePlayer`, this path must be retested.
+- The old custom `wrench_shaped` recipe is not active. Current recipes use vanilla shaped crafting plus the wrench's crafting remainder, so the wrench is not consumed or damaged during components crafting.
 - The renderer and GUI are minimal ports. Old emissive face overlays and advanced visual variants are not fully restored.
 - `android.sit()` is still a Create-seat stub returning `false, "Create seat support is not implemented in this build."`.
 
@@ -84,3 +87,30 @@ These are required for the current NeoForge integration approach but are less st
 ## Create support
 
 Create is not a hard dependency and is not required to start the mod. Seat support is intentionally deferred until the base Android computer, task, fuel and GUI paths have been manually smoke-tested.
+
+## Current pass P0 notes
+
+- Mining now computes destroy progress with the CC:Tweaked/NeoForge fake player and finishes through `ServerPlayerGameMode#destroyBlock`, so NeoForge block break events, player permission checks, tool harvest rules, tool damage and loot/drop handling run through the vanilla player path. Unbreakable blocks and blocks with zero destroy progress are still ignored.
+- Block and entity use now use the same fake player profile (`UUID` = Android entity UUID, name = `CCAndroids`) through `PlatformHelper`, with held-item changes copied back to the Android hand after the interaction.
+- Container info, insert and extract paths now query NeoForge `Capabilities.ItemHandler.BLOCK` with a side derived from the Android's position relative to the block. This respects sided/capability inventories when a provider exposes them. Manual in-game validation against vanilla chests and modded capability-only inventories is still recommended.
+- The wrench is now a normal crafting remainder. The existing vanilla shaped `components` recipe remains active, but crafting returns the same wrench stack without damaging it; wrench durability is still only consumed by Android deconstruction.
+
+## Current pass P1 notes
+
+- Rogue Androids now have natural spawn registration: a `neoforge:add_spawns` biome modifier adds them to `#minecraft:is_overworld` with weight 12 and pack size 1, while the registered spawn placement delegates to vanilla monster spawn rules and the existing `RoguesSpawnNaturally` config flag. This keeps the intended low-light cave behavior without custom light math.
+- The Rogue Android loot table already existed. Its current weights are CPU 1, components 50 and iron ingot 10 over three rolls, intentionally making components common and CPU rare.
+- Command Android construction is now enforced in code: Android frames reject Command Block CPU insertion unless the player has creative/instabuild privileges.
+- Command Androids are invulnerable to non-creative damage through both `hurt` and `isInvulnerableTo`.
+- Command Androids expose `android.runCommand(command)` to Lua. It runs through the Android entity command source with permission level 4. This name is a port assumption; adjust bundled/user Lua scripts if they expected a different legacy name.
+- Command Android CPU recovery was already represented by dropping a Command Block with the same `ComputerID` custom data used by Android CPUs. Re-inserting that Command Block into a frame reconstructs a Command Android with the preserved computer id.
+- Advanced Android support was already present: gold ingots during frame construction set the advanced tier, which uses dedicated config values (`AdvAndroidMaxHealth`, `AdvAndroidDamage`, `AdvAndroidSpeed`, `AdvAndroidArmor`) and longer search ranges.
+- `chat_message` events are now queued to active Android computers when a player sends chat within 50 blocks. Event arguments are `username`, `rawText`, and sender `uuid`.
+- CPU recovery now covers normal, advanced and command tiers through the existing `ComputerFamily` and `ComputerID` custom-data path. Advanced CPUs use the normal Android CPU item plus gold-tier frame state; Command CPUs use a Command Block.
+- Component crafting per wrench is implemented as a normal shaped recipe with the wrench returned as its crafting remainder. No evidence in the local code required replacing this with a right-click interaction.
+
+## Current pass P2/P3 notes
+
+- Pocket upgrades/peripheral bridging and modem/rednet remain deferred. `DummyPocket` is still only a placeholder.
+- `android.sit()` remains a Create-seat stub because Create is not present as a project dependency.
+- Renderer variants for normal/advanced/command/rogue and two dye variants already exist. Emissive face/core overlays are still not wired into renderer layers.
+- Additional shared CC:Tweaked classes now in use: `ComputerFamily` and `PlatformHelper` are referenced outside the computer container as part of tier handling and fake-player integration. Prefer replacing `PlatformHelper` only if CC:Tweaked exposes a stable public fake-player/interact helper in a future version.

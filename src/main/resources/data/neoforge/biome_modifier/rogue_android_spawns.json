@@ -1,0 +1,10 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": "#minecraft:is_overworld",
+  "spawners": {
+    "type": "cc_androids:rogue_android",
+    "weight": 12,
+    "minCount": 1,
+    "maxCount": 1
+  }
+}

@@ -6,12 +6,15 @@ import com.thunderbear06.computer.AndroidComputerContainer;
 import com.thunderbear06.computer.EntityComputer;
 import com.thunderbear06.inventory.AndroidInventory;
 import com.thunderbear06.tags.TagRegistry;
+import com.mojang.authlib.GameProfile;
 import dan200.computercraft.api.lua.MethodResult;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
+import dan200.computercraft.shared.platform.PlatformHelper;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
@@ -114,6 +117,14 @@ public abstract class BaseAndroidEntity extends PathfinderMob {
         setItemInHand(InteractionHand.MAIN_HAND, itemEntity.getItem().copy());
         itemEntity.discard();
         return MethodResult.of(true);
+    }
+
+    public ServerPlayer asFakePlayer() {
+        if (!(level() instanceof ServerLevel serverLevel)) return null;
+        ServerPlayer player = PlatformHelper.get().createFakePlayer(serverLevel, new GameProfile(getUUID(), "CCAndroids"));
+        player.moveTo(getX(), getY(), getZ(), getYRot(), getXRot());
+        player.setYHeadRot(getYHeadRot());
+        return player;
     }
 
     public MethodResult dropHandItem() {

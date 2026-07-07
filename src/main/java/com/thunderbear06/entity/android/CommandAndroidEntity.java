@@ -29,6 +29,11 @@ public class CommandAndroidEntity extends AdvancedAndroidEntity {
     }
 
     @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        return !source.isCreativePlayer() || super.isInvulnerableTo(source);
+    }
+
+    @Override
     public boolean hasFuel() {
         return true;
     }

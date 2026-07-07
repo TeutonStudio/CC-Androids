@@ -21,6 +21,16 @@ public class WrenchItem extends Item {
     }
 
     @Override
+    public boolean hasCraftingRemainingItem(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public ItemStack getCraftingRemainingItem(ItemStack itemStack) {
+        return itemStack.copy();
+    }
+
+    @Override
     public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
         if (entity instanceof CommandAndroidEntity) return InteractionResult.FAIL;
         if (entity instanceof AndroidEntity android && !android.isLocked()) {

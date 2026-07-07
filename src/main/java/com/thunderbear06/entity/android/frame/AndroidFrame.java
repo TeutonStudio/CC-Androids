@@ -63,6 +63,7 @@ public class AndroidFrame extends Mob {
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
         if ((stack.is(CCAndroids.ANDROID_CPU.get()) || stack.is(Items.COMMAND_BLOCK)) && readyForCpu()) {
+            if (stack.is(Items.COMMAND_BLOCK) && !player.getAbilities().instabuild) return InteractionResult.FAIL;
             finish(stack.is(Items.COMMAND_BLOCK) ? ComputerFamily.COMMAND : advanced ? ComputerFamily.ADVANCED : ComputerFamily.NORMAL, readComputerId(stack));
             consume(stack, player);
             return InteractionResult.sidedSuccess(level().isClientSide);

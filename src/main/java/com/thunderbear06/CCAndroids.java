@@ -2,6 +2,7 @@ package com.thunderbear06;
 
 import com.mojang.logging.LogUtils;
 import com.thunderbear06.computer.api.AndroidAPI;
+import com.thunderbear06.computer.EntityComputer;
 import com.thunderbear06.config.CCAndroidsConfig;
 import com.thunderbear06.config.ConfigLoader;
 import com.thunderbear06.entity.android.AdvancedAndroidEntity;
@@ -21,16 +22,22 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.ServerChatEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -119,6 +126,32 @@ public final class CCAndroids {
             event.put(COMMAND_ANDROID.get(), CommandAndroidEntity.createAndroidAttributes().build());
             event.put(UNFINISHED_ANDROID.get(), AndroidFrame.createAttributes().build());
             event.put(ROGUE_ANDROID.get(), RogueDroidEntity.createAndroidAttributes().build());
+        }
+
+        @SubscribeEvent
+        public static void registerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+            event.register(ROGUE_ANDROID.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    (type, level, reason, pos, random) -> CONFIG.RoguesSpawnNaturally && Monster.checkMonsterSpawnRules(type, level, reason, pos, random),
+                    RegisterSpawnPlacementsEvent.Operation.REPLACE);
+        }
+    }
+
+    @EventBusSubscriber(modid = MOD_ID)
+    public static final class GameEvents {
+        private static final double ANDROID_CHAT_RADIUS = 50.0D;
+
+        private GameEvents() {
+        }
+
+        @SubscribeEvent
+        public static void onServerChat(ServerChatEvent event) {
+            AABB area = event.getPlayer().getBoundingBox().inflate(ANDROID_CHAT_RADIUS);
+            for (AndroidEntity android : event.getPlayer().level().getEntitiesOfClass(AndroidEntity.class, area, android -> android.isAlive() && android.distanceToSqr(event.getPlayer()) <= ANDROID_CHAT_RADIUS * ANDROID_CHAT_RADIUS)) {
+                EntityComputer computer = android.getComputer().getServerComputer();
+                if (computer != null && computer.isOn()) {
+                    computer.queueEvent("chat_message", new Object[]{event.getUsername(), event.getRawText(), event.getPlayer().getStringUUID()});
+                }
+            }
         }
     }
 }

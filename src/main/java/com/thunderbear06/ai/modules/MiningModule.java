@@ -3,7 +3,9 @@ package com.thunderbear06.ai.modules;
 import com.thunderbear06.ai.AndroidBrain;
 import com.thunderbear06.entity.android.BaseAndroidEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class MiningModule extends AbstractAndroidModule {
@@ -14,17 +16,27 @@ public class MiningModule extends AbstractAndroidModule {
     }
 
     public boolean canMineBlock(BlockPos pos) {
+        ServerPlayer player = android.asFakePlayer();
+        if (player == null) return false;
         BlockState state = android.level().getBlockState(pos);
-        return !state.isAir() && state.getDestroySpeed(android.level(), pos) >= 0.0F;
+        return !state.isAir() && state.getDestroySpeed(android.level(), pos) >= 0.0F && state.getDestroyProgress(player, android.level(), pos) > 0.0F;
     }
 
     public void mine(BlockPos pos) {
-        if (!canMineBlock(pos)) return;
+        ServerPlayer player = android.asFakePlayer();
+        if (player == null) return;
+        BlockState state = android.level().getBlockState(pos);
+        if (state.isAir() || state.getDestroySpeed(android.level(), pos) < 0.0F) return;
+        ItemStack originalTool = android.getMainHandItem();
+        player.setItemInHand(InteractionHand.MAIN_HAND, originalTool.copy());
+        float destroyProgress = state.getDestroyProgress(player, android.level(), pos);
+        if (destroyProgress <= 0.0F) return;
         android.swing(InteractionHand.MAIN_HAND);
-        breakProgress += Math.max(0.2F, android.getMainHandItem().getDestroySpeed(android.level().getBlockState(pos)));
-        android.level().destroyBlockProgress(android.getId(), pos, Math.min(9, (int) breakProgress));
-        if (breakProgress >= 10.0F) {
-            android.level().destroyBlock(pos, true, android);
+        breakProgress += destroyProgress;
+        android.level().destroyBlockProgress(android.getId(), pos, Math.min(9, (int) (breakProgress * 10.0F)));
+        if (breakProgress >= 1.0F) {
+            player.gameMode.destroyBlock(pos);
+            android.setItemInHand(InteractionHand.MAIN_HAND, player.getMainHandItem().copy());
             resetBreakProgress(pos);
         }
     }

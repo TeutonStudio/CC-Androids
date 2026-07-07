@@ -4,14 +4,16 @@ import com.thunderbear06.ai.AndroidBrain;
 import com.thunderbear06.entity.android.BaseAndroidEntity;
 import dan200.computercraft.api.lua.LuaException;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,17 +84,22 @@ public class SensorModule extends AbstractAndroidModule {
 
     public HashMap<String, Object> getContainerInfo(BlockPos pos) throws LuaException {
         if (!pos.closerThan(android.blockPosition(), blockSearchRadius)) throw new LuaException("Position out of range");
-        BlockEntity blockEntity = android.level().getBlockEntity(pos);
         HashMap<String, Object> info = new HashMap<>();
-        if (!(blockEntity instanceof Container container)) return info;
-        info.put("slotCount", container.getContainerSize());
+        IItemHandler handler = android.level().getCapability(Capabilities.ItemHandler.BLOCK, pos, accessSide(pos));
+        if (handler == null) return info;
+        info.put("slotCount", handler.getSlots());
         List<List<Object>> slots = new ArrayList<>();
-        for (int i = 0; i < container.getContainerSize(); i++) {
-            ItemStack stack = container.getItem(i);
+        for (int i = 0; i < handler.getSlots(); i++) {
+            ItemStack stack = handler.getStackInSlot(i);
             slots.add(List.of(stack.getHoverName().getString(), stack.getCount()));
         }
         info.put("slots", slots);
         return info;
+    }
+
+    private Direction accessSide(BlockPos pos) {
+        Vec3 delta = android.position().subtract(Vec3.atCenterOf(pos));
+        return Direction.getNearest(delta.x, delta.y, delta.z);
     }
 
     private boolean matchesType(LivingEntity entity, @Nullable String type) {

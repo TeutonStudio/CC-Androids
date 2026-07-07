@@ -3,6 +3,7 @@ package com.thunderbear06.entity.android;
 import com.thunderbear06.CCAndroids;
 import com.thunderbear06.ai.AndroidBrain;
 import dan200.computercraft.shared.computer.core.ComputerFamily;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -102,14 +103,6 @@ public class AndroidEntity extends BaseAndroidEntity {
             stack.shrink(player.getAbilities().instabuild ? 0 : 1);
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
-        if (stack.is(Items.TRIPWIRE_HOOK) && (brain.getOwningPlayerProfile() == null || brain.isOwningPlayer(player))) {
-            if (!level().isClientSide) {
-                if (brain.getOwningPlayerProfile() == null) brain.setOwningPlayer(player.getGameProfile());
-                setLocked(!isLocked());
-                player.displayClientMessage(Component.translatable(isLocked() ? "entity.cc_androids.android.locked" : "entity.cc_androids.android.unlocked"), true);
-            }
-            return InteractionResult.sidedSuccess(level().isClientSide);
-        }
         if (!level().isClientSide && player instanceof ServerPlayer serverPlayer) {
             if (brain.getOwningPlayerProfile() == null) brain.setOwningPlayer(player.getGameProfile());
             getComputer().openComputer(serverPlayer);
@@ -150,16 +143,18 @@ public class AndroidEntity extends BaseAndroidEntity {
     }
 
     public void deconstruct() {
-        dropAndroidContents(true);
         spawnAtLocation(new ItemStack(CCAndroids.ANDROID_FRAME.get()));
         discard();
     }
 
-    public void dropConstructionMaterials(boolean full) {
-        int comps = Math.max(1, (int) (CCAndroids.CONFIG.CompsForConstruction * (full ? 1.0F : CCAndroids.CONFIG.CompsDroppedOnDeathPercentage)));
-        int ingots = Math.max(1, (int) (CCAndroids.CONFIG.IngotsForConstruction * (full ? 1.0F : CCAndroids.CONFIG.IngotsDroppedOnDeathPercentage)));
-        spawnAtLocation(new ItemStack(CCAndroids.COMPONENTS.get(), comps));
-        spawnAtLocation(new ItemStack(this instanceof AdvancedAndroidEntity ? Items.GOLD_INGOT : Items.IRON_INGOT, ingots));
+    public void dropConstructionMaterials(boolean fullConstructionRefund) {
+        float refund = fullConstructionRefund ? 1.0F : CCAndroids.CONFIG.CompsDroppedOnDeathPercentage;
+        int components = Math.round(CCAndroids.CONFIG.CompsForConstruction * refund);
+        if (components > 0) spawnAtLocation(new ItemStack(CCAndroids.COMPONENTS.get(), components));
+
+        float ingotRefund = fullConstructionRefund ? 1.0F : CCAndroids.CONFIG.IngotsDroppedOnDeathPercentage;
+        int ingots = Math.round(CCAndroids.CONFIG.IngotsForConstruction * ingotRefund);
+        if (ingots > 0) spawnAtLocation(new ItemStack(this instanceof AdvancedAndroidEntity ? Items.GOLD_INGOT : Items.IRON_INGOT, ingots));
     }
 
     @Override
