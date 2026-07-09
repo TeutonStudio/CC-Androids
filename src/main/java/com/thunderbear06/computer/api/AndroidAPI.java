@@ -12,6 +12,7 @@ import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.lua.MethodResult;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -175,14 +176,14 @@ public class AndroidAPI implements ILuaAPI {
         } else {
             return MethodResult.of(false, "Invalid hand name. Expected main/right or off/left.");
         }
-        return MethodResult.of(stack.getHoverName().getString(), stack.getCount());
+        return MethodResult.of(itemId(stack), stack.getCount());
     }
 
     @LuaFunction(mainThread = true)
     public final MethodResult getSlotInfo(int index) {
         if (index < 0 || index >= brain.getAndroid().inventory.getContainerSize()) return MethodResult.of(false, "Index out of range");
         ItemStack stack = brain.getAndroid().inventory.getItem(index);
-        return stack.isEmpty() ? MethodResult.of("empty") : MethodResult.of(stack.getHoverName().getString(), stack.getCount());
+        return stack.isEmpty() ? MethodResult.of("empty") : MethodResult.of(itemId(stack), stack.getCount());
     }
 
     @LuaFunction(mainThread = true)
@@ -262,6 +263,10 @@ public class AndroidAPI implements ILuaAPI {
 
     @LuaFunction
     public final MethodResult changeFace(String faceName) {
+        if (!faceName.equals("angry") && !faceName.equals("annoyed") && !faceName.equals("happy")
+                && !faceName.equals("sad") && !faceName.equals("woozy")) {
+            return MethodResult.of(false, "Unknown face. Expected angry, annoyed, happy, sad, or woozy.");
+        }
         brain.getAndroid().setFace(faceName);
         return MethodResult.of(true);
     }
@@ -292,5 +297,9 @@ public class AndroidAPI implements ILuaAPI {
     public final MethodResult getVehicleInfo() {
         var vehicle = brain.getAndroid().getVehicle();
         return MethodResult.of(vehicle == null ? Map.of() : Map.of("uuid", vehicle.getStringUUID(), "type", vehicle.getType().toString()));
+    }
+
+    private static String itemId(ItemStack stack) {
+        return BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
     }
 }

@@ -143,6 +143,7 @@ public class AndroidEntity extends BaseAndroidEntity {
     }
 
     public void deconstruct() {
+        dropAndroidContents(true);
         spawnAtLocation(new ItemStack(CCAndroids.ANDROID_FRAME.get()));
         discard();
     }

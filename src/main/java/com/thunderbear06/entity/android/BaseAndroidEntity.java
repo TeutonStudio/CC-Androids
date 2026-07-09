@@ -162,7 +162,7 @@ public abstract class BaseAndroidEntity extends PathfinderMob {
     public MethodResult canStash(ItemStack stack, int index) {
         if (index < 0 || index >= inventory.getContainerSize()) return MethodResult.of(false, "Index out of range");
         ItemStack stored = inventory.getItem(index);
-        if (!stored.isEmpty() && !ItemStack.isSameItemSameComponents(stored, stack)) return MethodResult.of(false, "Index is occupied by another item stack");
+        if (!stored.isEmpty()) return MethodResult.of(false, "Index is occupied");
         return null;
     }
 

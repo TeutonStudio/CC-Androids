@@ -10,6 +10,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public class AndroidFrameRenderer extends MobRenderer<AndroidFrame, HumanoidModel<AndroidFrame>> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(CCAndroids.MOD_ID, "textures/entity/android_unfinished.png");
+    private static final ResourceLocation CORE_TEXTURE = ResourceLocation.fromNamespaceAndPath(CCAndroids.MOD_ID, "textures/entity/android_unfinished_core.png");
 
     public AndroidFrameRenderer(EntityRendererProvider.Context context) {
         super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.5F);
@@ -17,6 +18,6 @@ public class AndroidFrameRenderer extends MobRenderer<AndroidFrame, HumanoidMode
 
     @Override
     public ResourceLocation getTextureLocation(AndroidFrame entity) {
-        return TEXTURE;
+        return entity.hasCore() ? CORE_TEXTURE : TEXTURE;
     }
 }

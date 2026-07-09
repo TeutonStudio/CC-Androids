@@ -26,6 +26,7 @@ public class AndroidFrame extends Mob {
     private static final EntityDataAccessor<Byte> INGOTS_NEEDED = SynchedEntityData.defineId(AndroidFrame.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Boolean> HAS_CORE = SynchedEntityData.defineId(AndroidFrame.class, EntityDataSerializers.BOOLEAN);
     private boolean advanced;
+    private boolean ingotTypeSelected;
 
     public AndroidFrame(EntityType<? extends Mob> entityType, Level level) {
         super(entityType, level);
@@ -51,8 +52,11 @@ public class AndroidFrame extends Mob {
             consume(stack, player);
             return InteractionResult.sidedSuccess(level().isClientSide);
         }
-        if ((stack.is(Items.IRON_INGOT) || stack.is(Items.GOLD_INGOT)) && getComponentsNeeded() == 0 && getIngotsNeeded() > 0) {
-            if (stack.is(Items.GOLD_INGOT)) advanced = true;
+        if ((stack.is(Items.IRON_INGOT) || stack.is(Items.GOLD_INGOT)) && getIngotsNeeded() > 0) {
+            boolean insertingGold = stack.is(Items.GOLD_INGOT);
+            if (ingotTypeSelected && advanced != insertingGold) return InteractionResult.FAIL;
+            advanced = insertingGold;
+            ingotTypeSelected = true;
             entityData.set(INGOTS_NEEDED, (byte) (getIngotsNeeded() - 1));
             consume(stack, player);
             return InteractionResult.sidedSuccess(level().isClientSide);
@@ -126,6 +130,7 @@ public class AndroidFrame extends Mob {
         tag.putByte("IngotsNeeded", getIngotsNeeded());
         tag.putBoolean("HasCore", hasCore());
         tag.putBoolean("Advanced", advanced);
+        tag.putBoolean("IngotTypeSelected", ingotTypeSelected);
     }
 
     @Override
@@ -135,5 +140,8 @@ public class AndroidFrame extends Mob {
         entityData.set(INGOTS_NEEDED, tag.getByte("IngotsNeeded"));
         entityData.set(HAS_CORE, tag.getBoolean("HasCore"));
         advanced = tag.getBoolean("Advanced");
+        ingotTypeSelected = tag.contains("IngotTypeSelected")
+                ? tag.getBoolean("IngotTypeSelected")
+                : getIngotsNeeded() < CCAndroids.CONFIG.IngotsForConstruction;
     }
 }

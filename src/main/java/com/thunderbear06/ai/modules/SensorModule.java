@@ -91,7 +91,7 @@ public class SensorModule extends AbstractAndroidModule {
         List<List<Object>> slots = new ArrayList<>();
         for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack stack = handler.getStackInSlot(i);
-            slots.add(List.of(stack.getHoverName().getString(), stack.getCount()));
+            slots.add(List.of(stack.isEmpty() ? "empty" : BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(), stack.getCount()));
         }
         info.put("slots", slots);
         return info;

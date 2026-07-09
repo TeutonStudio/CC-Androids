@@ -13,6 +13,7 @@ import com.thunderbear06.entity.android.frame.AndroidFrame;
 import com.thunderbear06.item.AndroidFrameItem;
 import com.thunderbear06.item.WrenchItem;
 import com.thunderbear06.menu.AndroidMenu;
+import com.thunderbear06.recipe.RecipeRegistry;
 import dan200.computercraft.api.ComputerCraftAPI;
 import dan200.computercraft.shared.network.container.ComputerContainerData;
 import dan200.computercraft.shared.network.container.ContainerData;
@@ -102,6 +103,7 @@ public final class CCAndroids {
         CREATIVE_TABS.register(modEventBus);
         SOUND_EVENTS.register(modEventBus);
         MENUS.register(modEventBus);
+        RecipeRegistry.SERIALIZERS.register(modEventBus);
         ComputerCraftAPI.registerAPIFactory(computer -> {
             var brain = computer.getComponent(com.thunderbear06.component.ComputerComponents.ANDROID_COMPUTER);
             return brain == null ? null : new AndroidAPI(brain);
@@ -131,7 +133,9 @@ public final class CCAndroids {
         @SubscribeEvent
         public static void registerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
             event.register(ROGUE_ANDROID.get(), SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    (type, level, reason, pos, random) -> CONFIG.RoguesSpawnNaturally && Monster.checkMonsterSpawnRules(type, level, reason, pos, random),
+                    (type, level, reason, pos, random) -> CONFIG.RoguesSpawnNaturally
+                            && level.getMaxLocalRawBrightness(pos) < 4
+                            && Monster.checkAnyLightMonsterSpawnRules(type, level, reason, pos, random),
                     RegisterSpawnPlacementsEvent.Operation.REPLACE);
         }
     }
@@ -149,7 +153,7 @@ public final class CCAndroids {
             for (AndroidEntity android : event.getPlayer().level().getEntitiesOfClass(AndroidEntity.class, area, android -> android.isAlive() && android.distanceToSqr(event.getPlayer()) <= ANDROID_CHAT_RADIUS * ANDROID_CHAT_RADIUS)) {
                 EntityComputer computer = android.getComputer().getServerComputer();
                 if (computer != null && computer.isOn()) {
-                    computer.queueEvent("chat_message", new Object[]{event.getUsername(), event.getRawText(), event.getPlayer().getStringUUID()});
+                    computer.queueEvent("chat_message", new Object[]{event.getRawText(), event.getUsername(), event.getPlayer().getStringUUID()});
                 }
             }
         }

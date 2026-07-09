@@ -10,9 +10,11 @@ import net.minecraft.resources.ResourceLocation;
 
 public class RogueAndroidRenderer extends MobRenderer<RogueDroidEntity, HumanoidModel<RogueDroidEntity>> {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(CCAndroids.MOD_ID, "textures/entity/android_rogue.png");
+    private static final ResourceLocation EMISSIVE = ResourceLocation.fromNamespaceAndPath(CCAndroids.MOD_ID, "textures/entity/emissive/android_rogue_e.png");
 
     public RogueAndroidRenderer(EntityRendererProvider.Context context) {
         super(context, new HumanoidModel<>(context.bakeLayer(ModelLayers.PLAYER)), 0.5F);
+        addLayer(new EmissiveTextureLayer<>(this, entity -> EMISSIVE));
     }
 
     @Override

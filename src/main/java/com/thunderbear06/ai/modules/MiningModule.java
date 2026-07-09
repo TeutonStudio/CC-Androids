@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class MiningModule extends AbstractAndroidModule {
     private float breakProgress;
+    private BlockPos breakingPos;
 
     public MiningModule(BaseAndroidEntity android, AndroidBrain brain) {
         super(android, brain);
@@ -18,6 +19,7 @@ public class MiningModule extends AbstractAndroidModule {
     public boolean canMineBlock(BlockPos pos) {
         ServerPlayer player = android.asFakePlayer();
         if (player == null) return false;
+        player.setItemInHand(InteractionHand.MAIN_HAND, android.getMainHandItem().copy());
         BlockState state = android.level().getBlockState(pos);
         return !state.isAir() && state.getDestroySpeed(android.level(), pos) >= 0.0F && state.getDestroyProgress(player, android.level(), pos) > 0.0F;
     }
@@ -26,11 +28,19 @@ public class MiningModule extends AbstractAndroidModule {
         ServerPlayer player = android.asFakePlayer();
         if (player == null) return;
         BlockState state = android.level().getBlockState(pos);
-        if (state.isAir() || state.getDestroySpeed(android.level(), pos) < 0.0F) return;
+        if (state.isAir() || state.getDestroySpeed(android.level(), pos) < 0.0F) {
+            resetBreakProgress(pos);
+            return;
+        }
+        if (breakingPos != null && !breakingPos.equals(pos)) resetBreakProgress(breakingPos);
+        breakingPos = pos.immutable();
         ItemStack originalTool = android.getMainHandItem();
         player.setItemInHand(InteractionHand.MAIN_HAND, originalTool.copy());
         float destroyProgress = state.getDestroyProgress(player, android.level(), pos);
-        if (destroyProgress <= 0.0F) return;
+        if (destroyProgress <= 0.0F) {
+            resetBreakProgress(pos);
+            return;
+        }
         android.swing(InteractionHand.MAIN_HAND);
         breakProgress += destroyProgress;
         android.level().destroyBlockProgress(android.getId(), pos, Math.min(9, (int) (breakProgress * 10.0F)));
@@ -42,7 +52,9 @@ public class MiningModule extends AbstractAndroidModule {
     }
 
     public void resetBreakProgress(BlockPos pos) {
-        android.level().destroyBlockProgress(android.getId(), pos, -1);
+        BlockPos progressPos = breakingPos == null ? pos : breakingPos;
+        android.level().destroyBlockProgress(android.getId(), progressPos, -1);
         breakProgress = 0.0F;
+        breakingPos = null;
     }
 }
