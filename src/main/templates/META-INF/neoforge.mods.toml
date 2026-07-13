@@ -42,7 +42,7 @@ logoFile="assets/cc_androids/icon.png" #optional
 #credits="" #optional
 
 # The authors of the mod, displayed in the mod UI (optional)
-authors="thunderbear06"
+authors="TeutonStudios-original(ThunderBear2006)"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
@@ -92,6 +92,13 @@ ComputerCraft-inspired android items and entities for NeoForge.
     modId="computercraft"
     type="required"
     versionRange="[1.120.0,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.${mod_id}]]
+    modId="kotlinforforge"
+    type="required"
+    versionRange="[${kotlin_for_forge_version},)"
     ordering="AFTER"
     side="BOTH"
 

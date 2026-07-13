@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id 'org.jetbrains.kotlin.jvm' version '2.4.0'
     id 'net.neoforged.moddev' version '2.0.141'
     id 'idea'
 }
@@ -29,6 +30,13 @@ sourceSets.main.resources {
 repositories {
     // Add here additional repositories if required by some of the dependencies below.
     maven {
+        name = "KotlinForForge"
+        url = "https://thedarkcolour.github.io/KotlinForForge/"
+        content {
+            includeGroup("thedarkcolour")
+        }
+    }
+    maven {
         name = "SquidDev"
         url = "https://maven.squiddev.cc"
         content {
@@ -43,6 +51,7 @@ base {
 
 // Mojang ships Java 21 to end users in 1.21.1, so mods should target Java 21.
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+kotlin.jvmToolchain(21)
 
 neoForge {
     // Specify the version of NeoForge to use.
@@ -125,6 +134,8 @@ configurations {
 }
 
 dependencies {
+    implementation("thedarkcolour:kotlinforforge:${kotlin_for_forge_version}")
+
     // CC:Tweaked API zum Kompilieren
     compileOnly("cc.tweaked:cc-tweaked-1.21.1-core-api:1.120.0")
     compileOnly("cc.tweaked:cc-tweaked-1.21.1-forge-api:1.120.0")
@@ -168,6 +179,7 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             mod_name               : mod_name,
             mod_license            : mod_license,
             mod_version            : mod_version,
+            kotlin_for_forge_version: kotlin_for_forge_version,
     ]
     inputs.properties replaceProperties
     expand replaceProperties
